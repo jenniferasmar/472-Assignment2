@@ -1,4 +1,4 @@
-# based on code from https://stackabuse.com/minimax-and-alpha-beta-pruning-in-python
+#!/usr/bin/env pypy
 
 import time
 
@@ -15,12 +15,7 @@ class Game:
         self.recommend = recommend
 
     def initialize_game(self):
-        array = []
-        self.current_state = []
-        for i in range(self.n):
-            array.append('.')
-        for i in range(self.n):
-            self.current_state.append(array)
+        self.current_state = [['.' for x in range(self.n)] for y in range(self.n)]
 
         # Player X always plays first
         self.player_turn = 'X'
@@ -42,31 +37,35 @@ class Game:
             return True
 
     def is_end(self):
+        # Column win
+        for column in self.current_state:
+            current = column[0]
+            count = 0
+            for i in range(len(column)):
+                if column[i] == '.':
+                    count = 0
+                elif current != column[i]:
+                    count = 1
+                elif column[i] == current:
+                    count += 1
+                current = column[i]
+                if count == self.s:
+                    return current
+
         # Horizontal win
         for i in range(self.n):
             count = 0
-            for j in range(1, self.n):
-                if self.current_state[j][i] == '.':
+            current = self.current_state[0][i]
+            for column in self.current_state:
+                if column[i] == '.':
                     count = 0
-                elif self.current_state[j][i] != '.' and count == 0:
+                elif current != column[i]:
                     count = 1
-                elif self.current_state[j][i] != '.' and self.current_state[j][i] == self.current_state[j - 1][i]:
+                elif current == column[i]:
                     count += 1
-                    if count == self.s:
-                        return self.current_state[j][i]
-
-        # Vertical win
-        for i in range(self.n):
-            count = 0
-            for j in range(1, self.n):
-                if self.current_state[i][j] == '.':
-                    count = 0
-                elif self.current_state[i][j] != '.' and count == 0:
-                    count = 1
-                elif self.current_state[i][j] != '.' and self.current_state[i][j] == self.current_state[i][j - 1]:
-                    count += 1
-                    if count == self.s:
-                        return self.current_state[i][j]
+                current = column[i]
+                if count == self.s:
+                    return current
 
         mat = [[0, 1, 2, 3, 9],
                [4, 5, 6, 7, 0],
@@ -264,14 +263,13 @@ class Game:
             if (self.player_turn == 'X' and player_x == self.AI) or (self.player_turn == 'O' and player_o == self.AI):
                 print(F'Evaluation time: {round(end - start, 7)}s')
                 print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
-            print(self.current_state[x][y])
             self.current_state[x][y] = self.player_turn
             self.switch_player()
 
     def get_parameters(self):
         self.n = int(input('Enter size of board (n): '))
         while self.n < 3 or self.n > 10:
-            self.n = input('Please enter a number between 3 and 10 for n: ')
+            self.n = str(input('Please enter a number between 3 and 10 for n: '))
 
         self.b = int(input('Enter the number of blocs (b): '))
         while self.b > 2 * self.n or self.b < 0:
