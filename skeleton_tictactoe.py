@@ -34,7 +34,7 @@ class Game:
         print()
 
     def is_valid(self, px, py):
-        if px < 0 or px > self.n-1 or py < 0 or py > self.n-1:
+        if px < 0 or px > self.n - 1 or py < 0 or py > self.n - 1:
             return False
         elif self.current_state[px][py] != '.':
             return False
@@ -43,32 +43,64 @@ class Game:
 
     def is_end(self):
         # Vertical win
-        for i in range(0, self.n):
-            if (self.current_state[0][i] != '.' and
-                    self.current_state[0][i] == self.current_state[1][i] and
-                    self.current_state[1][i] == self.current_state[2][i]):
-                return self.current_state[0][i]
+        for i in range(self.n):
+            count = 0
+            for j in range(1, self.n):
+                if self.current_state[j][i] == '.':
+                    count = 0
+                elif self.current_state[j][i] != '.' and count == 0:
+                    count = 1
+                elif self.current_state[j][i] != '.' and self.current_state[j][i] == self.current_state[j - 1][i]:
+                    count += 1
+                    if count == self.s:
+                        return self.current_state[j][i]
+
         # Horizontal win
-        for i in range(0, 3):
-            if (self.current_state[i] == ['X', 'X', 'X']):
-                return 'X'
-            elif (self.current_state[i] == ['O', 'O', 'O']):
-                return 'O'
-        # Main diagonal win
-        if (self.current_state[0][0] != '.' and
-                self.current_state[0][0] == self.current_state[1][1] and
-                self.current_state[0][0] == self.current_state[2][2]):
-            return self.current_state[0][0]
-        # Second diagonal win
-        if (self.current_state[0][2] != '.' and
-                self.current_state[0][2] == self.current_state[1][1] and
-                self.current_state[0][2] == self.current_state[2][0]):
-            return self.current_state[0][2]
+        for i in range(self.n):
+            count = 0
+            for j in range(1, self.n):
+                if self.current_state[i][j] == '.':
+                    count = 0
+                elif self.current_state[i][j] != '.' and count == 0:
+                    count = 1
+                elif self.current_state[i][j] != '.' and self.current_state[i][j] == self.current_state[i][j - 1]:
+                    count += 1
+                    if count == self.s:
+                        return self.current_state[i][j]
+
+        mat = [[0, 1, 2, 3, 9],
+               [4, 5, 6, 7, 0],
+               [8, 9, 10, 11, 18],
+               [1, 2, 3, 7, 0],
+               [4, 8, 5, 7, 10]]
+
+        diagonals = []
+        for start in range(self.n):
+            for j in range(self.n - self.s + 1):
+                diagonal = [self.current_state[start + i][i + j] for i in range(self.s) if
+                            0 <= i + j < self.n and 0 <= start + i < self.n]
+                if len(diagonal) >= self.s:
+                    diagonals.append(diagonal)
+                diagonal = [self.current_state[start + i][-i - j - 1] for i in range(self.s) if
+                            0 <= i + j < self.n and 0 <= start + i < self.n]
+                if len(diagonal) >= self.s:
+                    diagonals.append(diagonal)
+
+        for diag in diagonals:
+            first = diag[0]
+            if first == '.':
+                break
+            for i in range(len(diag)):
+                if first != diag[i]:
+                    break
+                if i == len(diag)-1:
+                    return diag[i]
+
         # Is whole board full?
-        for i in range(0, 3):
-            for j in range(0, 3):
+        for i in range(self.n):
+            for j in range(self.n):
                 # There's an empty field, we continue the game
-                if (self.current_state[i][j] == '.'):
+                if self.current_state[i][j] == '.':
                     return None
         # It's a tie!
         return '.'
@@ -122,8 +154,8 @@ class Game:
             return (1, x, y)
         elif result == '.':
             return (0, x, y)
-        for i in range(0, 3):
-            for j in range(0, 3):
+        for i in range(self.n):
+            for j in range(self.n):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
@@ -161,8 +193,8 @@ class Game:
             return (1, x, y)
         elif result == '.':
             return (0, x, y)
-        for i in range(0, 3):
-            for j in range(0, 3):
+        for i in range(self.n):
+            for j in range(self.n):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
@@ -191,13 +223,22 @@ class Game:
                             beta = value
         return (value, x, y)
 
-    def play(self, algo=None, player_x=None, player_o=None):
-        if algo == None:
+    def play(self):
+        if self.a:
             algo = self.ALPHABETA
-        if player_x == None:
+        else:
+            algo = self.MINIMAX
+
+        if self.player1_type == 'H':
             player_x = self.HUMAN
-        if player_o == None:
+        else:
+            player_x = self.AI
+
+        if self.player2_type == 'H':
             player_o = self.HUMAN
+        else:
+            player_o = self.AI
+
         while True:
             self.draw_board()
             if self.check_end():
@@ -264,8 +305,7 @@ class Game:
 
 def main():
     g = Game(recommend=True)
-    g.play(algo=Game.ALPHABETA, player_x=Game.AI, player_o=Game.AI)
-    g.play(algo=Game.MINIMAX, player_x=Game.AI, player_o=Game.HUMAN)
+    g.play()
 
 
 if __name__ == "__main__":
