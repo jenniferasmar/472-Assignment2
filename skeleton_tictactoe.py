@@ -42,7 +42,7 @@ class Game:
             return True
 
     def is_end(self):
-        # Vertical win
+        # Horizontal win
         for i in range(self.n):
             count = 0
             for j in range(1, self.n):
@@ -55,7 +55,7 @@ class Game:
                     if count == self.s:
                         return self.current_state[j][i]
 
-        # Horizontal win
+        # Vertical win
         for i in range(self.n):
             count = 0
             for j in range(1, self.n):
@@ -264,6 +264,7 @@ class Game:
             if (self.player_turn == 'X' and player_x == self.AI) or (self.player_turn == 'O' and player_o == self.AI):
                 print(F'Evaluation time: {round(end - start, 7)}s')
                 print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
+            print(self.current_state[x][y])
             self.current_state[x][y] = self.player_turn
             self.switch_player()
 
