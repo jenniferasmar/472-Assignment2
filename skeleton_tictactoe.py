@@ -16,7 +16,8 @@ class Game:
 
     def initialize_game(self):
         self.current_state = [['.' for x in range(self.n)] for y in range(self.n)]
-
+        for b in self.b_positions:
+            self.current_state[b[0]][b[1]] = '-'
         # Player X always plays first
         self.player_turn = 'X'
 
@@ -42,7 +43,7 @@ class Game:
             current = column[0]
             count = 0
             for i in range(len(column)):
-                if column[i] == '.':
+                if column[i] == '.' or column[i] == '-':
                     count = 0
                 elif current != column[i]:
                     count = 1
@@ -57,7 +58,7 @@ class Game:
             count = 0
             current = self.current_state[0][i]
             for column in self.current_state:
-                if column[i] == '.':
+                if column[i] == '.' or column[i] == '-':
                     count = 0
                 elif current != column[i]:
                     count = 1
@@ -99,7 +100,7 @@ class Game:
         for i in range(self.n):
             for j in range(self.n):
                 # There's an empty field, we continue the game
-                if self.current_state[i][j] == '.':
+                if self.current_state[i][j] == '.' or self.current_state[i][j] == '-':
                     return None
         # It's a tie!
         return '.'
@@ -134,7 +135,7 @@ class Game:
             self.player_turn = 'X'
         return self.player_turn
 
-    def minimax(self, max=False):
+    def minimax(self, max=False, count=0, start=time.time()):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # -1 - win for 'X'
@@ -153,27 +154,37 @@ class Game:
             return (1, x, y)
         elif result == '.':
             return (0, x, y)
-        for i in range(self.n):
-            for j in range(self.n):
-                if self.current_state[i][j] == '.':
-                    if max:
-                        self.current_state[i][j] = 'O'
-                        (v, _, _) = self.minimax(max=False)
-                        if v > value:
-                            value = v
-                            x = i
-                            y = j
-                    else:
-                        self.current_state[i][j] = 'X'
-                        (v, _, _) = self.minimax(max=True)
-                        if v < value:
-                            value = v
-                            x = i
-                            y = j
-                    self.current_state[i][j] = '.'
+
+        if self.player_turn == 'X':
+            max_depth = self.d1
+        else:
+            max_depth = self.d2
+
+        now = time.time()
+        if now - start < self.t-0.005:
+            for i in range(self.n):
+                for j in range(self.n):
+                    if self.current_state[i][j] == '.' and count < max_depth:
+                        count += 1
+                        if max:
+                            self.current_state[i][j] = 'O'
+                            (v, _, _) = self.minimax(max=False, start=start)
+                            if v > value:
+                                value = v
+                                x = i
+                                y = j
+                        else:
+                            self.current_state[i][j] = 'X'
+                            (v, _, _) = self.minimax(max=True, start=start)
+                            if v < value:
+                                value = v
+                                x = i
+                                y = j
+                        self.current_state[i][j] = '.'
+
         return (value, x, y)
 
-    def alphabeta(self, alpha=-2, beta=2, max=False):
+    def alphabeta(self, alpha=-2, beta=2, max=False, count=0, start=time.time()):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # -1 - win for 'X'
@@ -192,34 +203,43 @@ class Game:
             return (1, x, y)
         elif result == '.':
             return (0, x, y)
-        for i in range(self.n):
-            for j in range(self.n):
-                if self.current_state[i][j] == '.':
-                    if max:
-                        self.current_state[i][j] = 'O'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=False)
-                        if v > value:
-                            value = v
-                            x = i
-                            y = j
-                    else:
-                        self.current_state[i][j] = 'X'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=True)
-                        if v < value:
-                            value = v
-                            x = i
-                            y = j
-                    self.current_state[i][j] = '.'
-                    if max:
-                        if value >= beta:
-                            return (value, x, y)
-                        if value > alpha:
-                            alpha = value
-                    else:
-                        if value <= alpha:
-                            return (value, x, y)
-                        if value < beta:
-                            beta = value
+
+        if self.player_turn == 'X':
+            max_depth = self.d1
+        else:
+            max_depth = self.d2
+
+        now = time.time()
+        if now - start < self.t-0.005:
+            for i in range(self.n):
+                for j in range(self.n):
+                    if self.current_state[i][j] == '.' and count < max_depth:
+                        count += 1
+                        if max:
+                            self.current_state[i][j] = 'O'
+                            (v, _, _) = self.alphabeta(alpha, beta, max=False, start=start)
+                            if v > value:
+                                value = v
+                                x = i
+                                y = j
+                        else:
+                            self.current_state[i][j] = 'X'
+                            (v, _, _) = self.alphabeta(alpha, beta, max=True, start=start)
+                            if v < value:
+                                value = v
+                                x = i
+                                y = j
+                        self.current_state[i][j] = '.'
+                        if max:
+                            if value >= beta:
+                                return (value, x, y)
+                            if value > alpha:
+                                alpha = value
+                        else:
+                            if value <= alpha:
+                                return (value, x, y)
+                            if value < beta:
+                                beta = value
         return (value, x, y)
 
     def play(self):
@@ -245,14 +265,14 @@ class Game:
             start = time.time()
             if algo == self.MINIMAX:
                 if self.player_turn == 'X':
-                    (_, x, y) = self.minimax(max=False)
+                    (_, x, y) = self.minimax(max=False, start=start)
                 else:
-                    (_, x, y) = self.minimax(max=True)
+                    (_, x, y) = self.minimax(max=True, start=start)
             else:  # algo == self.ALPHABETA
                 if self.player_turn == 'X':
-                    (m, x, y) = self.alphabeta(max=False)
+                    (m, x, y) = self.alphabeta(max=False, start=start)
                 else:
-                    (m, x, y) = self.alphabeta(max=True)
+                    (m, x, y) = self.alphabeta(max=True, start=start)
             end = time.time()
             if (self.player_turn == 'X' and player_x == self.HUMAN) or (
                     self.player_turn == 'O' and player_o == self.HUMAN):
@@ -290,7 +310,7 @@ class Game:
 
         self.t = int(input('Enter the maximum allowed time (in seconds) to return a move: '))
 
-        mini_or_alpha = int(input('Enter 1 to use minimax or 2 to sue alphabeta: '))
+        mini_or_alpha = int(input('Enter 1 to use minimax or 2 to use alphabeta: '))
         while mini_or_alpha != 1 and mini_or_alpha != 2:
             mini_or_alpha = int(input('Enter 1 to use minimax or 2 to sue alphabeta: '))
         if mini_or_alpha == 1:
