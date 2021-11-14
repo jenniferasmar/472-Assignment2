@@ -10,9 +10,12 @@ class Game:
     AI = 3
 
     def __init__(self, recommend=True):
+        self.current_state = []
+        self.player_turn = ''
         self.get_parameters()
         self.initialize_game()
         self.recommend = recommend
+        self.evaluations = {}
 
     def initialize_game(self):
         self.current_state = [['.' for x in range(self.n)] for y in range(self.n)]
@@ -28,6 +31,22 @@ class Game:
                 print(F'{self.current_state[x][y]}', end="")
             print()
         print()
+
+    def write_board(self):
+        self.f.write("\n\n   ")
+        for i in range(self.n):
+            self.f.write(F"{i}  ")
+        self.f.write("\n +-")
+        for i in range(self.n):
+            self.f.write("---")
+        self.f.write("\n")
+
+        for y in range(0, self.n):
+            self.f.write(F"{y}|")
+            for x in range(0, self.n):
+                self.f.write(F" {self.current_state[x][y]} ")
+            self.f.write("\n")
+        self.f.write("\n")
 
     def is_valid(self, px, py):
         if px < 0 or px > self.n - 1 or py < 0 or py > self.n - 1:
@@ -111,10 +130,13 @@ class Game:
         if self.result != None:
             if self.result == 'X':
                 print('The winner is X!')
+                self.f.write('The winner is X!')
             elif self.result == 'O':
                 print('The winner is O!')
+                self.f.write('The winner is O!')
             elif self.result == '.':
                 print("It's a tie!")
+                self.f.write("It's a tie!")
             self.initialize_game()
         return self.result
 
@@ -153,13 +175,25 @@ class Game:
 
         if result == 'X':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
         elif result == 'O':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
         elif result == '.':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
 
         if self.player_turn == 'X':
             max_depth = self.d1
@@ -175,16 +209,20 @@ class Game:
                         # leaf node
                         if count == max_depth - 1:
                             h_result = self.call_heuristic()
+                            if count in self.evaluations.keys():
+                                self.evaluations[count] += 1
+                            else:
+                                self.evaluations[count] = 1
                         if max:
                             self.current_state[i][j] = 'O'
-                            (_, _, h) = self.minimax(max=False, start=start)
+                            (_, _, h) = self.minimax(max=False, start=start, count=count)
                             if h >= h_result:
                                 h_result = h
                                 x = i
                                 y = j
                         else:
                             self.current_state[i][j] = 'X'
-                            (_, _, h) = self.minimax(max=True, start=start)
+                            (_, _, h) = self.minimax(max=True, start=start, count=count)
                             if h <= h_result:
                                 h_result = h
                                 x = i
@@ -193,8 +231,11 @@ class Game:
                         self.current_state[i][j] = '.'
         else:
             h_result = self.call_heuristic()
-
-        return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+        return x, y, h_result
 
     def alphabeta(self, alpha=-2, beta=2, max=False, count=0, start=time.time()):
         # Minimizing for 'X' and maximizing for 'O'
@@ -213,13 +254,25 @@ class Game:
         result = self.is_end()
         if result == 'X':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
         elif result == 'O':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
         elif result == '.':
             h_result = self.call_heuristic()
-            return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+            return x, y, h_result
 
         if self.player_turn == 'X':
             max_depth = self.d1
@@ -235,16 +288,20 @@ class Game:
                         # leaf node
                         if count == max_depth - 1:
                             h_result = self.call_heuristic()
+                            if count in self.evaluations.keys():
+                                self.evaluations[count] += 1
+                            else:
+                                self.evaluations[count] = 1
                         if max:
                             self.current_state[i][j] = 'O'
-                            (_, _, h) = self.alphabeta(alpha, beta, max=False, start=start)
+                            (_, _, h) = self.alphabeta(alpha, beta, max=False, start=start, count=count)
                             if h >= h_result:
                                 h_result = h
                                 x = i
                                 y = j
                         else:
                             self.current_state[i][j] = 'X'
-                            (_, _, h) = self.alphabeta(alpha, beta, max=True, start=start)
+                            (_, _, h) = self.alphabeta(alpha, beta, max=True, start=start, count=count)
                             if h <= h_result:
                                 h_result = h
                                 x = i
@@ -257,13 +314,16 @@ class Game:
                                 alpha = h_result
                         else:
                             if h_result <= alpha:
-                                 return (x, y, h_result)
+                                return (x, y, h_result)
                             if h_result < beta:
                                 beta = h_result
         else:
             h_result = self.call_heuristic()
-
-        return (x, y, h_result)
+            if count in self.evaluations.keys():
+                self.evaluations[count] += 1
+            else:
+                self.evaluations[count] = 1
+        return x, y, h_result
 
     def call_heuristic(self):
         if self.player_turn == 'X':
@@ -390,9 +450,12 @@ class Game:
 
         while True:
             self.draw_board()
+            self.write_board()
             if self.check_end():
+                self.f.close()
                 return
 
+            self.evaluations = {}
             start = time.time()
             if algo1 == self.MINIMAX and self.player_turn == 'X':
                 (x, y, h_result) = self.minimax(max=False, start=start)
@@ -417,13 +480,28 @@ class Game:
                 print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
                 print(F'Heuristic result: {h_result}')
 
+                self.f.write(F"\nPlayer {self.player_turn} under AI control plays: x = {x}, y = {y}\n")
+
+                self.f.write(F"\ni. Heuristic evaluation time: {round(end - start, 7)}s")
+
+                values = self.evaluations.values()
+                total = sum(values)
+                self.f.write(F"\nii. Heuristic evaluations: {total}")
+                self.f.write(F"\niii. Evaluations by depth: {self.evaluations}")
+                if total != 0:
+                    total_sum = sum(k*v for k, v in self.evaluations.items())/total
+                else:
+                    total_sum = 0
+                self.f.write(F"\niv. Average evaluation depth: {total_sum}")
+                self.f.write(F"\nv. Average recursion depth:")
+
             self.current_state[x][y] = self.player_turn
             self.switch_player()
 
     def get_parameters(self):
         self.n = int(input('Enter size of board (n): '))
         while self.n < 3 or self.n > 10:
-            self.n = str(input('Please enter a number between 3 and 10 for n: '))
+            self.n = int(input('Please enter a number between 3 and 10 for n: '))
 
         self.b = int(input('Enter the number of blocs (b): '))
         while self.b > 2 * self.n or self.b < 0:
@@ -472,6 +550,13 @@ class Game:
 
         self.player1_type = input('Enter H or AI for player 1: ')
         self.player2_type = input('Enter H or AI for player 2: ')
+
+        self.f = open(F"gameTrace-{self.n}-{self.b}-{self.s}-{self.t}", "a")
+        self.f.write(F"n={self.n} b={self.b} s={self.s} t={self.t}")
+        if self.b_positions:
+            self.f.write(F"\nblocks: {self.b_positions}")
+        self.f.write(F"\n\nPlayer 1: {self.player1_type} d={self.d1} a={self.a1} e{self.e1}")
+        self.f.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2} e{self.e2}")
 
 
 def main():
