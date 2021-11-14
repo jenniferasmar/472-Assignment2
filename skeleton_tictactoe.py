@@ -135,7 +135,7 @@ class Game:
             self.player_turn = 'X'
         return self.player_turn
 
-    def minimax(self, max=False, count=0, start=time.time()):
+    def minimax(self, max=False, count=0, start=time.time(), heuristic_result=0):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # -1 - win for 'X'
@@ -149,11 +149,14 @@ class Game:
         y = None
         result = self.is_end()
         if result == 'X':
-            return (-1, x, y)
+            h_result = self.call_heuristic()
+            return (-1, x, y, h_result)
         elif result == 'O':
-            return (1, x, y)
+            h_result = self.call_heuristic()
+            return (1, x, y, h_result)
         elif result == '.':
-            return (0, x, y)
+            h_result = self.call_heuristic()
+            return (0, x, y, h_result)
 
         if self.player_turn == 'X':
             max_depth = self.d1
@@ -180,11 +183,26 @@ class Game:
                                 value = v
                                 x = i
                                 y = j
+                        if max:
+                            if self.e1 == 1:
+                                self.heuristic_e1()
+                            else:
+                                self.heuristic_e2()
+                        else:
+                            if self.e2 == 1:
+                                self.heuristic_e1()
+                            else:
+                                self.heuristic_e2()
+
                         self.current_state[i][j] = '.'
 
-        return (value, x, y)
+        h_result = self.call_heuristic()
+        if h_result > heuristic_result:
+            return (value, x, y, heuristic_result)
+        else:
+            return (value, x, y, h_result)
 
-    def alphabeta(self, alpha=-2, beta=2, max=False, count=0, start=time.time()):
+    def alphabeta(self, alpha=-2, beta=2, max=False, count=0, start=time.time(), heuristic_result=0):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # -1 - win for 'X'
@@ -198,11 +216,14 @@ class Game:
         y = None
         result = self.is_end()
         if result == 'X':
-            return (-1, x, y)
+            h_result = self.call_heuristic()
+            return (-1, x, y, h_result)
         elif result == 'O':
-            return (1, x, y)
+            h_result = self.call_heuristic()
+            return (1, x, y, h_result)
         elif result == '.':
-            return (0, x, y)
+            h_result = self.call_heuristic()
+            return (0, x, y, h_result)
 
         if self.player_turn == 'X':
             max_depth = self.d1
@@ -230,17 +251,126 @@ class Game:
                                 x = i
                                 y = j
                         self.current_state[i][j] = '.'
+                        h_result = self.call_heuristic()
                         if max:
                             if value >= beta:
-                                return (value, x, y)
+                                if h_result < heuristic_result:
+                                    return (value, x, y, heuristic_result)
+                                else:
+                                    return (value, x, y, h_result)
                             if value > alpha:
                                 alpha = value
                         else:
                             if value <= alpha:
-                                return (value, x, y)
+                                if h_result > heuristic_result:
+                                    return (value, x, y, heuristic_result)
+                                else:
+                                    return (value, x, y, h_result)
                             if value < beta:
                                 beta = value
-        return (value, x, y)
+
+        h_result = self.call_heuristic()
+        if h_result > heuristic_result:
+            return (value, x, y, heuristic_result)
+        else:
+            return (value, x, y, h_result)
+
+    def call_heuristic(self):
+        if self.player_turn == 'X':
+            if self.e1 == 1:
+                result = self.heuristic_e1()
+            else:
+                result = self.heuristic_e2()
+        else:
+            if self.e2 == 1:
+                result = self.heuristic_e1()
+            else:
+                result = self.heuristic_e2()
+
+        return result
+
+    # count num X and num O (#X-#O)
+    def heuristic_e1(self):
+        num_X = 0
+        num_O = 0
+        for column in self.current_state:
+            num_X += column.count('X')
+            num_O += column.count('O')
+        return num_X-num_O
+
+    # count how many X we have in column, rows and diagonals, same for Os
+    def heuristic_e2(self):
+        mat = [[0, 1, 2, 3, 9],
+               [4, 5, 6, 7, 0],
+               [8, 9, 10, 11, 18],
+               [1, 2, 3, 7, 0],
+               [4, 8, 5, 7, 10]]
+
+        diagonals = []
+        for j in range(self.n - self.s + 1):
+            diagonal = [self.current_state[i][i + j] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+            diagonal = [self.current_state[i][-i - j - 1] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+        for start in range(1, self.n):
+            j = 0
+            diagonal = [self.current_state[start + i][i + j] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= start + i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+            diagonal = [self.current_state[start + i][-i - j - 1] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= start + i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+            j = self.n-1
+            diagonal = [self.current_state[start + i][i + j] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= start + i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+            diagonal = [self.current_state[start + i][-i - j - 1] for i in range(self.n) if
+                        0 <= i + j < self.n and 0 <= start + i < self.n]
+            if len(diagonal) >= self.s:
+                diagonals.append(diagonal)
+
+            # Horizontal win
+            horizontals = []
+            for i in range(self.n):
+                row = []
+                for column in self.current_state:
+                    row.append(column[i])
+                horizontals.append(row)
+
+            all = diagonal + horizontals + self.current_state
+
+            total = 0
+            for list in all:
+                current = list[0]
+                current_score = 1
+                for i in range(1, len(list)):
+                    if list[i] != '.' and list[i] != '-':
+                        if current == '':
+                            current = list[i]
+                        if current == list[i]:
+                            current_score *= 10
+                        elif current != list[i] and current == 'X':
+                            total += current_score
+                            current_score = 10
+                            current = 'O'
+                        elif current != list[i] and current == 'O':
+                            total -= current_score
+                            current_score = 10
+                            current = 'X'
+                    else:
+                        if current == 'X':
+                            total += current_score
+                        else:
+                            total -= current_score
+                        current_score = 1
+                        current = ''
 
     def play(self):
         if self.a:
@@ -312,11 +442,22 @@ class Game:
 
         mini_or_alpha = int(input('Enter 1 to use minimax or 2 to use alphabeta: '))
         while mini_or_alpha != 1 and mini_or_alpha != 2:
-            mini_or_alpha = int(input('Enter 1 to use minimax or 2 to sue alphabeta: '))
+            mini_or_alpha = int(input('Enter 1 to use minimax or 2 to use alphabeta: '))
         if mini_or_alpha == 1:
             self.a = False
         else:
             self.a = True
+
+        e1_or_e2 = int(input('Enter 1 to use heuristic 1 or 2 to use heuristic 2 for player 1: '))
+        while e1_or_e2 != 1 and e1_or_e2 != 2:
+            e1_or_e2 = int(input('Enter 1 to use heuristic 1 or 2 to use heuristic 2 for player 1: '))
+        self.e1 = e1_or_e2
+
+        e1_or_e2 = int(input('Enter 1 to use heuristic 1 or 2 to use heuristic 2 for player 2: '))
+        while e1_or_e2 != 1 and e1_or_e2 != 2:
+            e1_or_e2 = int(input('Enter 1 to use heuristic 1 or 2 to use heuristic 2 for player 2: '))
+        self.e2 = e1_or_e2
+
 
         self.player1_type = input('Enter H or AI for player 1: ')
         self.player2_type = input('Enter H or AI for player 2: ')
