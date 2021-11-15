@@ -17,6 +17,34 @@ class Game:
         self.recommend = recommend
         self.evaluations = {}
 
+        self.moves = 0
+        self.avg_time = []
+        self.total_heuristic_evaluations = 0
+        self.total_heuristic_depth = {}
+        self.avg_evaluation_depth = []
+        self.avg_recursive_depth = []
+
+        self.final_avg_moves = []
+        self.final_avg_time = []
+        self.final_total_heuristic_evaluations = 0
+        self.final_total_heuristic_depth = {}
+        self.final_avg_evaluation_depth = []
+        self.final_avg_recursive_depth = []
+
+    def restart(self):
+        self.current_state = []
+        self.player_turn = ''
+        self.get_parameters()
+        self.initialize_game()
+
+        self.evaluations = {}
+        self.moves = 0
+        self.avg_time = []
+        self.total_heuristic_evaluations = 0
+        self.total_heuristic_depth = {}
+        self.avg_evaluation_depth = []
+        self.avg_recursive_depth = []
+
     def initialize_game(self):
         self.current_state = [['.' for x in range(self.n)] for y in range(self.n)]
         for b in self.b_positions:
@@ -119,25 +147,47 @@ class Game:
         for i in range(self.n):
             for j in range(self.n):
                 # There's an empty field, we continue the game
-                if self.current_state[i][j] == '.' or self.current_state[i][j] == '-':
+                if self.current_state[i][j] == '.':
                     return None
         # It's a tie!
         return '.'
 
     def check_end(self):
+        game_over = False
         self.result = self.is_end()
         # Printing the appropriate message if the game has ended
-        if self.result != None:
+        if self.result is not None:
             if self.result == 'X':
-                print('The winner is X!')
+                game_over = True
+                print('The winner is X!\n')
                 self.f.write('The winner is X!')
             elif self.result == 'O':
-                print('The winner is O!')
+                game_over = True
+                print('The winner is O!\n')
                 self.f.write('The winner is O!')
             elif self.result == '.':
-                print("It's a tie!")
+                game_over = True
+                print("It's a tie!\n")
                 self.f.write("It's a tie!")
             self.initialize_game()
+        if game_over:
+            self.f.write(F'\n\n6(b)i Average evaluation time:  {sum(self.avg_time)/len(self.avg_time)} s')
+            self.f.write(F'\n6(b)ii  Total heuristic evaluations: {self.total_heuristic_evaluations}')
+            self.f.write(F'\n6(b)iii Evaluations by depth: {self.total_heuristic_depth}')
+            self.f.write(F'\n6(b)iv  Average evaluation depth: {sum(self.avg_evaluation_depth)/len(self.avg_evaluation_depth)}')
+            # self.f.write(F'\n6(b)v   Average recursion depth: {sum(self.avg_recursive_depth)/len(self.avg_recursive_depth)}')
+            self.f.write(F'\n6(b)vi  Total moves: {self.moves}')
+
+            self.final_avg_moves.append(self.moves)
+            self.final_avg_time.append(self.avg_time)
+            self.final_total_heuristic_evaluations += self.total_heuristic_evaluations
+            for depth in self.total_heuristic_depth:
+                if depth in self.final_total_heuristic_depth.keys():
+                    self.final_total_heuristic_depth[depth] += self.total_heuristic_depth[depth]
+                else:
+                    self.final_total_heuristic_depth[depth] = self.total_heuristic_depth[depth]
+            self.final_avg_evaluation_depth.append(self.avg_evaluation_depth)
+            # self.final_avg_recursive_depth.append(self.avg_recursive_depth)
         return self.result
 
     def input_move(self):
@@ -453,7 +503,7 @@ class Game:
             self.write_board()
             if self.check_end():
                 self.f.close()
-                return
+                break
 
             self.evaluations = {}
             start = time.time()
@@ -480,20 +530,34 @@ class Game:
                 print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
                 print(F'Heuristic result: {h_result}')
 
+            if player_o == self.AI and player_x == self.AI:
                 self.f.write(F"\nPlayer {self.player_turn} under AI control plays: x = {x}, y = {y}\n")
+                self.moves += 1
 
                 self.f.write(F"\ni. Heuristic evaluation time: {round(end - start, 7)}s")
+                self.avg_time.append(round(end - start, 7))
 
                 values = self.evaluations.values()
                 total = sum(values)
                 self.f.write(F"\nii. Heuristic evaluations: {total}")
+                self.total_heuristic_evaluations += total
+
                 self.f.write(F"\niii. Evaluations by depth: {self.evaluations}")
+                for depth in self.evaluations:
+                    if depth in self.total_heuristic_depth.keys():
+                        self.total_heuristic_depth[depth] += self.evaluations[depth]
+                    else:
+                        self.total_heuristic_depth[depth] = self.evaluations[depth]
+
                 if total != 0:
                     total_sum = sum(k*v for k, v in self.evaluations.items())/total
                 else:
                     total_sum = 0
                 self.f.write(F"\niv. Average evaluation depth: {total_sum}")
+                self.avg_evaluation_depth.append(total_sum)
+
                 self.f.write(F"\nv. Average recursion depth:")
+                # self.avg_recursive_depth.append()
 
             self.current_state[x][y] = self.player_turn
             self.switch_player()
@@ -551,17 +615,25 @@ class Game:
         self.player1_type = input('Enter H or AI for player 1: ')
         self.player2_type = input('Enter H or AI for player 2: ')
 
-        self.f = open(F"gameTrace-{self.n}-{self.b}-{self.s}-{self.t}", "a")
-        self.f.write(F"n={self.n} b={self.b} s={self.s} t={self.t}")
-        if self.b_positions:
-            self.f.write(F"\nblocks: {self.b_positions}")
-        self.f.write(F"\n\nPlayer 1: {self.player1_type} d={self.d1} a={self.a1} e{self.e1}")
-        self.f.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2} e{self.e2}")
+        if self.player1_type == 'AI' and self.player2_type == 'AI':
+            self.f = open(F"gameTrace-{self.n}-{self.b}-{self.s}-{self.t}", "a")
+            self.f.write(F"n={self.n} b={self.b} s={self.s} t={self.t}")
+            if self.b_positions:
+                self.f.write(F"\nblocks: {self.b_positions}")
+            self.f.write(F"\n\nPlayer 1: {self.player1_type} d={self.d1} a={self.a1} e{self.e1}")
+            self.f.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2} e{self.e2}")
 
 
 def main():
     g = Game(recommend=True)
     g.play()
+    while True:
+        restart = input('Want to replay (y/n)? ')
+        if restart == 'y':
+            g.restart()
+            g.play()
+        else:
+            return
 
 
 if __name__ == "__main__":
