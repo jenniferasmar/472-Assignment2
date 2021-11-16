@@ -159,7 +159,8 @@ class Game:
             if self.result == 'X':
                 game_over = True
                 print('The winner is X!\n')
-                self.f.write('The winner is X!')
+                if self.player1_type == 'AI' and self.player2_type == 'AI':
+                    self.f.write('The winner is X!')
 
                 if self.e1 == 1:
                     self.e1_wins += 1
@@ -168,7 +169,8 @@ class Game:
             elif self.result == 'O':
                 game_over = True
                 print('The winner is O!\n')
-                self.f.write('The winner is O!')
+                if self.player1_type == 'AI' and self.player2_type == 'AI':
+                    self.f.write('The winner is O!')
 
                 if self.e2 == 1:
                     self.e1_wins += 1
@@ -177,26 +179,28 @@ class Game:
             elif self.result == '.':
                 game_over = True
                 print("It's a tie!\n")
-                self.f.write("It's a tie!")
+                if self.player1_type == 'AI' and self.player2_type == 'AI':
+                    self.f.write("It's a tie!")
             self.initialize_game()
         if game_over:
-            self.f.write(F'\n\n6(b)i Average evaluation time:  {sum(self.avg_time)/len(self.avg_time)} s')
-            self.f.write(F'\n6(b)ii  Total heuristic evaluations: {self.total_heuristic_evaluations}')
-            self.f.write(F'\n6(b)iii Evaluations by depth: {self.total_heuristic_depth}')
-            self.f.write(F'\n6(b)iv  Average evaluation depth: {sum(self.avg_evaluation_depth)/len(self.avg_evaluation_depth)}')
-            # self.f.write(F'\n6(b)v   Average recursion depth: {sum(self.avg_recursive_depth)/len(self.avg_recursive_depth)}')
-            self.f.write(F'\n6(b)vi  Total moves: {self.moves}')
+            if self.player1_type == 'AI' and self.player2_type == 'AI':
+                self.f.write(F'\n\n6(b)i Average evaluation time:  {sum(self.avg_time)/len(self.avg_time)} s')
+                self.f.write(F'\n6(b)ii  Total heuristic evaluations: {self.total_heuristic_evaluations}')
+                self.f.write(F'\n6(b)iii Evaluations by depth: {self.total_heuristic_depth}')
+                self.f.write(F'\n6(b)iv  Average evaluation depth: {sum(self.avg_evaluation_depth)/len(self.avg_evaluation_depth)}')
+                # self.f.write(F'\n6(b)v   Average recursion depth: {sum(self.avg_recursive_depth)/len(self.avg_recursive_depth)}')
+                self.f.write(F'\n6(b)vi  Total moves: {self.moves}')
 
-            self.final_avg_moves.append(self.moves)
-            self.final_avg_time += self.avg_time
-            self.final_total_heuristic_evaluations += self.total_heuristic_evaluations
-            for depth in self.total_heuristic_depth:
-                if depth in self.final_total_heuristic_depth.keys():
-                    self.final_total_heuristic_depth[depth] += self.total_heuristic_depth[depth]
-                else:
-                    self.final_total_heuristic_depth[depth] = self.total_heuristic_depth[depth]
-            self.final_avg_evaluation_depth += self.avg_evaluation_depth
-            # self.final_avg_recursive_depth += self.avg_recursive_depth
+                self.final_avg_moves.append(self.moves)
+                self.final_avg_time += self.avg_time
+                self.final_total_heuristic_evaluations += self.total_heuristic_evaluations
+                for depth in self.total_heuristic_depth:
+                    if depth in self.final_total_heuristic_depth.keys():
+                        self.final_total_heuristic_depth[depth] += self.total_heuristic_depth[depth]
+                    else:
+                        self.final_total_heuristic_depth[depth] = self.total_heuristic_depth[depth]
+                self.final_avg_evaluation_depth += self.avg_evaluation_depth
+                # self.final_avg_recursive_depth += self.avg_recursive_depth
         return self.result
 
     def input_move(self):
@@ -488,7 +492,8 @@ class Game:
 
     def play(self):
         self.num_of_games += 1
-        self.f.write(F"\n\n\n***** GAME {self.num_of_games} *****")
+        if self.player1_type == 'AI' and self.player2_type == 'AI':
+            self.f.write(F"\n\n\n***** GAME {self.num_of_games} *****")
         if self.a1:
             algo1 = self.ALPHABETA
         else:
@@ -511,7 +516,8 @@ class Game:
 
         while True:
             self.draw_board()
-            self.write_board()
+            if self.player1_type == 'AI' and self.player2_type == 'AI':
+                self.write_board()
             if self.check_end():
                 break
 
@@ -634,23 +640,25 @@ class Game:
             self.f.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2} e{self.e2}")
 
     def write_scoreboard(self):
-        self.f.close()
-        self.f2 = open("scoreboard.txt", "a")
-        self.f2.write(F"n={self.n} b={self.b} s={self.s} t={self.t}\n")
-        self.f2.write(F"\nPlayer 1: {self.player1_type} d={self.d1} a={self.a1}")
-        self.f2.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2}")
-        self.f2.write(F"\n\n{self.num_of_games} games")
-        self.f2.write(F"\n\nTotal wins for heuristic e1: {self.e1_wins} ({self.e1_wins/self.num_of_games*100}%)")
-        self.f2.write(F"\nTotal wins for heuristic e2: {self.e2_wins} ({self.e2_wins / self.num_of_games * 100}%)")
-        self.f2.write(F"\n\ni. Average evaluation time: {sum(self.final_avg_time)/len(self.final_avg_time)}s")
-        self.f2.write(F"\nii. Total heuristic evaluations: {self.final_total_heuristic_evaluations}")
-        self.f2.write(F"\niii. Evaluations by depth: {self.final_total_heuristic_depth}")
-        self.f2.write(F"\niv. Average evaluation depth: "
-                      F"{sum(self.final_avg_evaluation_depth)/len(self.final_avg_evaluation_depth)}")
-        # self.f2.write(F"\nv. Average recursion depth: "
-        #               F"{sum(self.final_avg_recursive_depth)/len(self.final_avg_recursive_depth)}")
-        self.f2.write(F"\nvi. Average moves per game: {sum(self.final_avg_moves)/len(self.final_avg_moves)}")
-        self.f2.close()
+        if self.player1_type == 'AI' and self.player2_type == 'AI':
+            self.f.close()
+            self.f2 = open("scoreboard.txt", "a")
+            self.f2.write(F"n={self.n} b={self.b} s={self.s} t={self.t}\n")
+            self.f2.write(F"\nPlayer 1: {self.player1_type} d={self.d1} a={self.a1}")
+            self.f2.write(F"\nPlayer 2: {self.player2_type} d={self.d2} a={self.a2}")
+            self.f2.write(F"\n\n{self.num_of_games} games")
+            self.f2.write(F"\n\nTotal wins for heuristic e1: {self.e1_wins} ({self.e1_wins/self.num_of_games*100}%)")
+            self.f2.write(F"\nTotal wins for heuristic e2: {self.e2_wins} ({self.e2_wins / self.num_of_games * 100}%)")
+            self.f2.write(F"\n\ni. Average evaluation time: {sum(self.final_avg_time)/len(self.final_avg_time)}s")
+            self.f2.write(F"\nii. Total heuristic evaluations: {self.final_total_heuristic_evaluations}")
+            self.f2.write(F"\niii. Evaluations by depth: {self.final_total_heuristic_depth}")
+            self.f2.write(F"\niv. Average evaluation depth: "
+                          F"{sum(self.final_avg_evaluation_depth)/len(self.final_avg_evaluation_depth)}")
+            # self.f2.write(F"\nv. Average recursion depth: "
+            #               F"{sum(self.final_avg_recursive_depth)/len(self.final_avg_recursive_depth)}")
+            self.f2.write(F"\nvi. Average moves per game: {sum(self.final_avg_moves)/len(self.final_avg_moves)}")
+            self.f2.close()
+
 
 def main():
     g = Game(recommend=True)
