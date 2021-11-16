@@ -533,6 +533,14 @@ class Game:
                 (x, y, h_result) = self.alphabeta(max=True, start=start)
             end = time.time()
 
+            if x is None or y is None:
+                for i in range(self.n):
+                    for j in range(self.n):
+                        if self.current_state[i][j] == '.':
+                            x = i
+                            y = j
+                            break
+
             if (self.player_turn == 'X' and player_x == self.HUMAN) or (
                     self.player_turn == 'O' and player_o == self.HUMAN):
                 if self.recommend:
