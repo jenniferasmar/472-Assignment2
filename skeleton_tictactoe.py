@@ -413,12 +413,6 @@ class Game:
 
     # count how many X we have in column, rows and diagonals, same for Os
     def heuristic_e2(self):
-        mat = [[0, 1, 2, 3, 9],
-               [4, 5, 6, 7, 0],
-               [8, 9, 10, 11, 18],
-               [1, 2, 3, 7, 0],
-               [4, 8, 5, 7, 10]]
-
         diagonals = []
         for j in range(self.n - self.s + 1):
             diagonal = [self.current_state[i][i + j] for i in range(self.n) if
@@ -640,7 +634,7 @@ class Game:
         self.player2_type = input('Enter H or AI for player 2: ')
 
         if self.player1_type == 'AI' and self.player2_type == 'AI':
-            self.f = open(F"gameTrace-{self.n}-{self.b}-{self.s}-{self.t}.txt", "a")
+            self.f = open(F"gameTrace-{self.n}{self.b}{self.s}{self.t}.txt", "a")
             self.f.write(F"n={self.n} b={self.b} s={self.s} t={self.t}")
             if self.b_positions:
                 self.f.write(F"\nblocks: {self.b_positions}")
